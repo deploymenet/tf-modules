@@ -41,7 +41,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3backend" {
   }
 }
 
-resource "aws_s3_bucket_policy" "allow_access_from_another_account" {
+resource "aws_s3_bucket_policy" "allow_access_from_current_account" {
   bucket = aws_s3_bucket.s3backend.id
   policy = data.aws_iam_policy_document.allow_access_from_current_account.json
 }
@@ -50,7 +50,7 @@ data "aws_iam_policy_document" "allow_access_from_current_account" {
   statement {
   principals {
       type        = "AWS"
-      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:*"]
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
 
     actions = [
