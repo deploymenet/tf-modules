@@ -1,3 +1,5 @@
+data "aws_caller_identity" "current" {}
+
 resource "aws_s3_bucket" "s3backend" {
   bucket = var.bucket_Name
 
@@ -36,5 +38,32 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3backend" {
       kms_master_key_id = aws_kms_key.terraform-bucket-key.arn
       sse_algorithm     = "aws:kms"
     }
+  }
+}
+
+resource "aws_s3_bucket_policy" "allow_access_from_another_account" {
+  bucket = aws_s3_bucket.s3backend.id
+  policy = data.aws_iam_policy_document.allow_access_from_current_account.json
+}
+
+data "aws_iam_policy_document" "allow_access_from_current_account" {
+  statement {
+  principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:*"]
+    }
+
+    actions = [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:ListBucket",
+        "s3:GetBucketVersioning",
+        "s3:PutBucketVersioning"
+    ]
+
+    resources = [
+      aws_s3_bucket.s3backend.arn,
+      "${aws_s3_bucket.s3backend.arn}/*",
+    ]
   }
 }
